@@ -139,6 +139,7 @@ public class Source  extends AbstractActor {
     }
     //配套的读取不带delay的window消息
     private void readWindowMessage(String line,long size) throws InterruptedException {
+        //取出kv对，封装成Message
         String [] content =line.trim().split(",");
         String key = content[0];
         String value = content[1];
@@ -175,8 +176,8 @@ public class Source  extends AbstractActor {
         //在下一个窗口范围内，但是>watermark
         if(startTime+size+delay<=waterMark&&startTime+size*2>waterMark){
             //watermark落到下个window并触发该次window的计算，注意当前元素添加进batchQueue
-            delayWindowTrigger();
-            printTimeInfo(size);
+            delayWindowTrigger(getTimeInfo(size));
+
             System.out.println("batchQueue=nextbatchQueue");
             batchQueue.clear();
             for (Message message : nextbatchQueue) {
@@ -190,8 +191,7 @@ public class Source  extends AbstractActor {
         }
         //watermark落到下下个window但还没触发,触发该次window
         else if(startTime+size*2<=waterMark&&startTime+size*2+delay>waterMark){
-            delayWindowTrigger();
-            printTimeInfo(size);
+            delayWindowTrigger(getTimeInfo(size));
             System.out.println("batchQueue=nextbatchQueue");
             batchQueue.clear();
             for (Message message : nextbatchQueue) {
@@ -204,16 +204,15 @@ public class Source  extends AbstractActor {
             startTime=startTime+size;
         }
         else if(waterMark>=startTime+size*2+delay){
-            delayWindowTrigger();
-            printTimeInfo(size);
+            delayWindowTrigger(getTimeInfo(size));
+
             startTime=startTime+size;
             System.out.println("batchQueue=nextbatchQueue");
             batchQueue.clear();
             for (Message message : nextbatchQueue) {
                 batchQueue.add(message);
             }
-            delayWindowTrigger();
-            printTimeInfo(size);
+            delayWindowTrigger(getTimeInfo(size));
             //把startTime更新至比waterMark小的最大的窗口
             while (startTime+size<waterMark){
                 startTime=startTime+size;
@@ -237,14 +236,14 @@ public class Source  extends AbstractActor {
     }
     //因为网络传输的时延问题，会出现打印窗口信息先于窗口数据出现，以及连续打印两个窗口信息，再连续打印两个窗口的数据，所以修改代码结构拆成两个方法Z加个锁试试
     //窗口触发的函数，把当前窗口清空
-    public synchronized void delayWindowTrigger(){
+    public void delayWindowTrigger(String info){
         //把该批数据发往下游
         if(batchQueue.size()!=0) {
-            BatchMessage batchMsg = new BatchMessage(batchQueue);
+            BatchMessage batchMsg = new BatchMessage(batchQueue,info);
             final int receiver = Math.abs(batchQueue.get(0).getKey().hashCode()) % downstream.size();
             //发送到下游
             downstream.get(receiver).tell(batchMsg, self());
-
+            System.out.println("batchMessage.getBatchInfo():"+batchMsg.getBatchInfo());
             //打印这一批消息的信息
 
             total += batchMsg.getMessages().size();
@@ -252,25 +251,17 @@ public class Source  extends AbstractActor {
             System.out.println(String.format("Total messages: %d", total));
         }
     }
-    public synchronized void printTimeInfo(long size) throws Exception {
+    public String getTimeInfo(long size) throws Exception {
         //startTime是当前窗口的开始时间
-        Thread.sleep(size/2*1000);
         long end = startTime+size;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String date_string = sdf.format(new Date(end * 1000L));
-        try {
-            FileWriter writer = new FileWriter(new File("/opt/apps/Ava/Ava-project/data/sink.csv"), true);
-            String info = "Window end time:"+date_string+" windowsize:"+size+"s"+" delay:"+delay+" cur_watermark:"+waterMark+"\n";
-            System.out.println("Window end time:"+date_string+" windowsize:"+size+"s"+" delay:"+delay+" cur_watermark:"+waterMark+"\n");
-            writer.write(info);
-            writer.close();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+        String info = "Window end time:"+date_string+" windowsize:"+size+"s"+" delay:"+delay+" cur_watermark:"+waterMark+"\n";
+
+        return info;
     }
 
-    public void sendWindowMessage(Message msg,long size){
+    public void sendWindowMessage (Message msg,long size){
         long curTime = System.currentTimeMillis() / 1000;
         //如果当前时间超过了窗口的结束时间，窗口关闭
         if(startTime+size<=curTime){
@@ -278,18 +269,19 @@ public class Source  extends AbstractActor {
             long end = startTime+size;
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String date_string = sdf.format(new Date(end * 1000L));
+            String info = "Window end time:"+date_string+" windowsize:"+size+"s"+"\n";
             //更新startTime,为<=currentTime的最大的开始时间
             while (startTime+size<=curTime){
                 startTime=startTime+size;
             }
             //把该批数据发往下游
             if(batchQueue.size()!=0) {
-                BatchMessage batchMsg = new BatchMessage(batchQueue);
+                BatchMessage batchMsg = new BatchMessage(batchQueue,info);
+
                 final int receiver = Math.abs(batchQueue.get(0).getKey().hashCode()) % downstream.size();
                 downstream.get(receiver).tell(batchMsg, self());
-
+                System.out.println("batchMessage.getBatchInfo():"+batchMsg.getBatchInfo());
                 //打印这一批消息的信息
-
                 total += batchMsg.getMessages().size();
                 System.out.println("Source sending batch " + batchMsg);
                 System.out.println(String.format("Total messages: %d", total));
@@ -297,16 +289,6 @@ public class Source  extends AbstractActor {
                 //清空队列，加入当前一条新的消息
                 batchQueue.clear();
                 batchQueue.add(msg);
-                try {
-                    FileWriter writer = new FileWriter(new File("/opt/apps/Ava/Ava-project/data/sink.csv"), true);
-                    String info = "Window end time:"+date_string+" windowsize:"+size+"s"+"\n";
-                    System.out.println("Window end time:"+date_string+" windowsize:"+size+"s"+"\n");
-                    writer.write(info);
-                    writer.close();
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
             }
         }
         else{

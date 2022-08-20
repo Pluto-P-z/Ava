@@ -32,8 +32,8 @@ public class FilterWorker extends Worker {
             }
         }
         final int receiver = Math.abs(batchQueue.get(0).getKey().hashCode()) % downstream.size();
-        downstream.get(receiver).tell(new BatchMessage(batchQueue), self());
-
+        downstream.get(receiver).tell(new BatchMessage(batchQueue,batchMessage.getBatchInfo()), self());
+        System.out.println("batchMessage.getBatchInfo():"+batchMessage.getBatchInfo());
         batchQueue.clear();
     }
 

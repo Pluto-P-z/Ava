@@ -6,7 +6,6 @@ import akka.remote.RemoteScope;
 
 import com.asoul.ava.messages.create.*;
 import com.asoul.ava.workers.*;
-import com.asoul.ava.messages.stats.GetWorkersMsg;
 import scala.concurrent.duration.Duration;
 
 import java.util.ArrayList;

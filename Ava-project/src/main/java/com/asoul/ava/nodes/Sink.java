@@ -7,8 +7,6 @@ import akka.actor.Props;
 
 import com.asoul.ava.messages.BatchMessage;
 import com.asoul.ava.messages.Message;
-import com.asoul.ava.messages.stats.RequestStatsMsg;
-import com.asoul.ava.messages.stats.StatsMsg;
 
 public class Sink extends AbstractActor {
     private String filePath = "data/sink.csv";
@@ -27,24 +25,13 @@ public class Sink extends AbstractActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder() //
-                .match(RequestStatsMsg.class, this::onRequestStatsMsg) //
                 .match(BatchMessage.class, this::onBatchMessage) //
                 .build();
     }
 
-    protected void onRequestStatsMsg(RequestStatsMsg message) {
-        try {
-            StatsMsg result = new StatsMsg(self().path().name(), 0, total, 0,
-                    totalBatches, 0, 0, 0);
-            getSender().tell(result, getSelf());
-        } catch (Exception e) {
-            getSender().tell(new akka.actor.Status.Failure(e), getSelf());
-            throw e;
-        }
-    }
 
-
-    private final void onBatchMessage(BatchMessage batchMessage) {
+    //写一批消息
+    private final void onBatchMessage(BatchMessage batchMessage) throws Exception{
         System.out.println("Sink received batch: " + batchMessage);
         totalBatches++;
         total += batchMessage.getMessages().size();
@@ -57,23 +44,30 @@ public class Sink extends AbstractActor {
                 writeMessage(message);
             }
         }
+        System.out.println("batchMessage.getBatchInfo():"+batchMessage.getBatchInfo());
+        FileWriter writer = new FileWriter(new File(filePath), true);
+        StringBuilder sb = new StringBuilder();
+        sb.append(batchMessage.getBatchInfo());
+        sb.append('\n');
+        writer.write(sb.toString());
+        writer.close();
     }
-
+    //写一条消息
     private final void writeMessage(Message message) {
         try (FileWriter writer = new FileWriter(new File(filePath), true)) {
 
             StringBuilder sb = new StringBuilder();
 
-            // If is first write, write header first
+            // 第一次写
             if(firstWrite) {
-                sb.append("key,");
+                sb.append("key");
                 sb.append(',');
                 sb.append("value");
                 sb.append('\n');
                 firstWrite = false;
             }
 
-            // Write message on csv
+            // 写入数据
             sb.append(message.getKey());
             sb.append(',');
             sb.append(message.getVal());

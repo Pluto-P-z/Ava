@@ -7,12 +7,23 @@ import java.util.List;
 
 //一批消息，包含由一个List的若干条消息，对应一个窗口的数据
 public class BatchMessage implements Serializable {
+    private static final long serialVersionUID = -5844532433791505868L;
     private List<Message> messages = new ArrayList<>();
     private boolean recovered = false;
+    String batchInfo;
 
-    public BatchMessage(List<Message> messages) {
+    public String getBatchInfo() {
+        return batchInfo;
+    }
+
+    public void setBatchInfo(String batchInfo) {
+        this.batchInfo = batchInfo;
+    }
+
+    public BatchMessage(List<Message> messages, String batchInfo) {
         super();
         this.messages.addAll(messages);
+        this.batchInfo = batchInfo;
     }
 
     public final List<Message> getMessages() {
