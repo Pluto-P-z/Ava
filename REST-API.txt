@@ -1,0 +1,25 @@
+=== REST API EXAMPLES ===
+# 一定要先设置job再设置source
+# OPEN KAFKASOURCE
+/opt/apps/kafka_2.12-2.6.2/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic test-topic
+
+# 进入项目目录
+cd /opt/apps/Ava/Ava-project
+
+# 启动项目
+mvn exec:java -Dexec.mainClass="com.asoul.ava.Collaborator" -Dexec.args="192.168.19.3:6120"
+mvn exec:java -Dexec.mainClass="com.asoul.ava.Collaborator" -Dexec.args="192.168.19.5:6121"
+mvn exec:java -Dexec.mainClass="com.asoul.ava.HttpServer" -Dexec.args="-s 192.168.19.4:6000 -c 192.168.19.3:6120,192.168.19.5:6121"
+
+# 设置JOB
+curl -d '{"id":"1"}' -H "Content-Type: application/json" -X POST http://192.168.19.4:8080/job
+
+# 设置kafkaSource
+curl -d '{"topic":"test-topic","size":10}' -H "Content-Type: application/json" -X POST http://192.168.19.4:8080/source/kafka
+
+# 设置kafkaSourceWithDelay
+curl -d '{"topic":"test-topic","size":10,"delay":5}' -H "Content-Type: application/json" -X POST http://192.168.19.4:8080/source/kafka_event_with_delay
+
+
+
+
