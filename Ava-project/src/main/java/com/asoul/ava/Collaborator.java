@@ -18,7 +18,6 @@ public class Collaborator {
 
             final Config nodeConf = ConfigFactory.parseFile(new File("conf/node.conf"));
 
-
             Config collab = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port +"\n"
                     + "akka.remote.netty.tcp.hostname=" + ip);
 

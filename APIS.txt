@@ -5,7 +5,8 @@
 # 进入项目目录
 cd /opt/apps/Ava/Ava-project
 
-# 启动项目
+# 启动集群
+在Ava-project目录下
 mvn exec:java -Dexec.mainClass="com.asoul.ava.Collaborator" -Dexec.args="192.168.19.3:6120"
 mvn exec:java -Dexec.mainClass="com.asoul.ava.Collaborator" -Dexec.args="192.168.19.5:6121"
 mvn exec:java -Dexec.mainClass="com.asoul.ava.HttpServer" -Dexec.args="-s 192.168.19.4:6000 -c 192.168.19.3:6120,192.168.19.5:6121"

@@ -32,7 +32,6 @@ public class Master extends AbstractActor {
                 .match(SourceMsg.class, this::onReceiveSource) //
                 .match(SinkMsg.class, this::onReceiveSink) //
                 .match(CreateMapMsg.class, this::onCreateMapMsg) //
-                .match(CreateFlatMapMsg.class, this::onCreateFlatMapMsg) //
                 .match(CreateAggMsg.class, this::onCreateAggMsg) //
                 .match(CreateFilterMsg.class, this::onCreateFilterMsg) //
                 .build();
@@ -86,23 +85,6 @@ public class Master extends AbstractActor {
         }
         //把worker丢进stage里面
         updateStage(mapWorker);
-    }
-
-    private void onCreateFlatMapMsg(CreateFlatMapMsg flatMapMsg) {
-        ActorRef flatMapWorker;
-        if (flatMapMsg.isLocal()) {
-            flatMapWorker = getContext().actorOf(FlatMapWorker.props(
-                    flatMapMsg.getPosStage(),
-                    stageDeepCopy(oldStage),
-                    flatMapMsg.getFun()).withMailbox("recover-mailbox"), flatMapMsg.getName());
-        } else {
-            flatMapWorker = getContext().actorOf(FlatMapWorker.props(
-                    flatMapMsg.getPosStage(),
-                    stageDeepCopy(oldStage),
-                    flatMapMsg.getFun()).withMailbox("recover-mailbox")
-                    .withDeploy(new Deploy(new RemoteScope(flatMapMsg.getAddress()))), flatMapMsg.getName());
-        }
-        updateStage(flatMapWorker);
     }
 
     private void onCreateAggMsg(CreateAggMsg aggMsg) {

@@ -86,9 +86,8 @@ public class Starter {
         master.tell(new ChangeStageMsg(), ActorRef.noSender());
 
 
-        // Instantiate operators in reverse order, updating downstream at each stage
-        //为什么要把算子倒过来呢?
-        //为什么+1？因为要先-
+
+        //posStage的作用是打印信息，知道当前是第几个算子
         int posStage = numStages + 1;
 
 
@@ -122,11 +121,6 @@ public class Starter {
                 if(op instanceof MapOperator) {
                     master.tell(new CreateMapMsg(op.name,  posStage, isLocal, nodesAddr.get(i),
                             ((MapOperator) op).fun), ActorRef.noSender());
-                }
-                // FlatMap
-                else if(op instanceof FlatMapOperator) {
-                    master.tell(new CreateFlatMapMsg(op.name, posStage, isLocal, nodesAddr.get(i),
-                            ((FlatMapOperator) op).fun), ActorRef.noSender());
                 }
                 // Filter
                 else if(op instanceof FilterOperator) {
