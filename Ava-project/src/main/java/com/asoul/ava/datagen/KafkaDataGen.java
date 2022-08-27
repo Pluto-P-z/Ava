@@ -27,7 +27,7 @@ public class KafkaDataGen {
     }
 
     private static void genBatch(Properties props,ArrayList<String> words) {
-        for(int i=0;i<1;i++) {
+        for(int i=0;i<2;i++) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -42,6 +42,7 @@ public class KafkaDataGen {
                         //count为10到14范围闭区间的整数
                         int count = rand.nextInt(5)+10;
                         s=s+','+count;
+                        System.out.println(s);
                         ProducerRecord<String, String> record = new ProducerRecord<>("test-topic", s);
                         kafkaProducer.send(record);
                         try {

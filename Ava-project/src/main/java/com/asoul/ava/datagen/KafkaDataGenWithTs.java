@@ -28,7 +28,7 @@ public class KafkaDataGenWithTs {
     }
 
     private static void genBatch(Properties props,ArrayList<String> words) {
-        for(int i=0;i<1;i++) {
+        for(int i=0;i<2;i++) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -42,10 +42,12 @@ public class KafkaDataGenWithTs {
                         String s = words.get(index);
                         //count为10到14范围闭区间的整数
                         int count = rand.nextInt(5)+10;
+                        //当前时间随机+0-29s,用于测试乱序数据延迟触发的窗口
                         int ts = rand.nextInt(30)+(int)(System.currentTimeMillis() / 1000);
                         s=ts+","+s+","+count;
                         System.out.println(s);
                         ProducerRecord<String, String> record = new ProducerRecord<>("test-topic", s);
+                        //ts,word,count
                         kafkaProducer.send(record);
                         try {
                             Thread.sleep(rand.nextInt(500)+500);

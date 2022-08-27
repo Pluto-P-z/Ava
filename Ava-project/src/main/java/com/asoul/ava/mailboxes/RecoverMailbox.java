@@ -7,12 +7,11 @@ import akka.dispatch.UnboundedStablePriorityMailbox;
 import com.asoul.ava.messages.BatchMessage;
 import com.asoul.ava.messages.Message;
 import com.typesafe.config.Config;
-//改，Message直接弃用了
 public class RecoverMailbox extends UnboundedStablePriorityMailbox {
 
     public RecoverMailbox(ActorSystem.Settings settings, Config config) {
 
-        // Create a new PriorityGenerator, lower priority means more important
+        //创建一个新的PriorityGenerator，较低的优先级意味着更重要
         super(
                 new PriorityGenerator() {
                     @Override
@@ -24,7 +23,7 @@ public class RecoverMailbox extends UnboundedStablePriorityMailbox {
                             }
                             else return 1;
                         }
-                      return 1; // Other messages
+                      return 1; // 其他消息
                     }
                 });
     }

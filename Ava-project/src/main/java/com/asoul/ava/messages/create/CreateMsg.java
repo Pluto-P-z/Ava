@@ -6,7 +6,6 @@ import java.io.Serializable;
 //创建Worker的通知信息基类
 public abstract class CreateMsg implements Serializable {
     protected String name;
-    protected String color;
     protected int posStage;
     protected boolean isLocal;
     protected Address address;
@@ -24,7 +23,7 @@ public abstract class CreateMsg implements Serializable {
         return name;
     }
 
-    public String getColor() { return color; }
+
 
     public int getPosStage() { return posStage; }
 

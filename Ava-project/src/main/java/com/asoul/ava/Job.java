@@ -54,6 +54,22 @@ public class Job implements Serializable {
             }
             )
             ), "jobOne");
+    public static final Job jobTwo = new Job(Arrays.asList(
+            //先全部变成小写
+            new MapOperator("Map",(MapFunction & Serializable)(String k,String v)->{
+                String newKey = k.toLowerCase();
+                return new Message(newKey,v);
+            }),
+            //聚合
+            new AggregateOperator(  "Aggregate",(AggregateFunction & Serializable) (String k, List<String> vs)->{
+                int sum = 0;
+                for(int i=0;i<vs.size();i++){
+                    sum+=Integer.parseInt(vs.get(i));
+                }
+                return new Message(k,sum+"");
+            }
+            )
+    ), "jobTwo");
 
 }
 

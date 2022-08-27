@@ -178,7 +178,10 @@ class HttpServer extends HttpApp {
                                             system = Starter.starterNode(starterNodeURI, collaboratorNodesURI,
                                                     Job.jobOne.getOperators());
                                         }
-
+                                        else if(jobId.getId() == 2) {
+                                            system = Starter.starterNode(starterNodeURI, collaboratorNodesURI,
+                                                    Job.jobTwo.getOperators());
+                                        }
                                         return complete(String.format("Stopped previous Job. Started Job %d!\n",
                                                 jobId.getId()));
                                     } catch (Exception e) {
