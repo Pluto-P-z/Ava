@@ -10,21 +10,26 @@ public abstract class CreateMsg implements Serializable {
     protected boolean isLocal;
     protected Address address;
 
-
-    public CreateMsg(String name,int posStage, boolean isLocal, Address address) {
+    protected int machineNumber;
+    protected int shuffleFlag;
+    public CreateMsg(String name,int posStage, boolean isLocal, Address address,int machineNumber,int shuffleFlag) {
         this.name = name;
-
         this.posStage = posStage;
         this.isLocal = isLocal;
         this.address = address;
+        this.machineNumber = machineNumber;
+        this.shuffleFlag = shuffleFlag;
     }
 
     public String getName() {
         return name;
     }
-
-
-
+    public int getShuffleFlag(){
+        return this.shuffleFlag;
+    }
+    public int getMachineNumber(){
+        return this.machineNumber;
+    }
     public int getPosStage() { return posStage; }
 
     public boolean isLocal() {

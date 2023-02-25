@@ -5,9 +5,7 @@ import akka.actor.ActorRef;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import akka.actor.Props;
 import com.asoul.ava.messages.BatchMessage;
@@ -21,7 +19,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 
 public class Source  extends AbstractActor {
 
-    private List<ActorRef> downstream = new ArrayList<>();
+    private Map<Integer,ActorRef> downstream = new HashMap<>();
 
 
     private int sleepTime = 400;
@@ -44,7 +42,7 @@ public class Source  extends AbstractActor {
         super();
     }
 
-    public Source(final List<ActorRef> downstream, int sleepTime,long startTime,long delay) {
+    public Source(final Map<Integer,ActorRef> downstream, int sleepTime,long startTime,long delay) {
         this.downstream = downstream;
         this.sleepTime = sleepTime;
         this.startTime=startTime;

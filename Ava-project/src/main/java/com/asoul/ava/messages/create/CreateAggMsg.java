@@ -8,9 +8,9 @@ public class CreateAggMsg extends CreateMsg {
 
 
     public CreateAggMsg(String name, int posStage, boolean isLocal,
-                        Address address,  final AggregateFunction fun
-                        ) {
-        super(name,  posStage, isLocal, address);
+                        Address address,  final AggregateFunction fun,int machineNumber
+                        ,int shuffleFlag) {
+        super(name,  posStage, isLocal, address,machineNumber,shuffleFlag);
         this.fun = fun;
     }
 

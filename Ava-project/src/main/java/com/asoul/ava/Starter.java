@@ -2,10 +2,7 @@ package com.asoul.ava;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import akka.actor.*;
 
@@ -19,7 +16,7 @@ import com.typesafe.config.ConfigFactory;
 
 
 public class Starter {
-
+    protected static int shuffleFlag = 0;
     public static void main( String[] args ) throws InterruptedException, IOException {
         //主节点的地址，这里是默认的。实际程序运行是在HttpServer里面执行starterNode方法传入命令行解析来的参数
         String starterNodeURI = "akka.tcp://sys@127.0.0.1:6000";
@@ -73,7 +70,7 @@ public class Starter {
         System.out.println("System created on starter node!" );
 
         //创建rpc节点Sink
-        List<ActorRef> sink = createSink(sys);
+        Map<Integer,ActorRef> sink = createSink(sys);
         System.out.println("Sink created!" );
 
         //创建rpc节点master
@@ -120,17 +117,25 @@ public class Starter {
                 // Map
                 if(op instanceof MapOperator) {
                     master.tell(new CreateMapMsg(op.name,  posStage, isLocal, nodesAddr.get(i),
-                            ((MapOperator) op).fun), ActorRef.noSender());
+                            ((MapOperator) op).fun,i,shuffleFlag), ActorRef.noSender());
+                    if (shuffleFlag > 0){
+                        shuffleFlag--;
+                    }
                 }
                 // Filter
                 else if(op instanceof FilterOperator) {
                     master.tell(new CreateFilterMsg(op.name, posStage, isLocal, nodesAddr.get(i),
-                            ((FilterOperator) op).fun), ActorRef.noSender());
+                            ((FilterOperator) op).fun,i,shuffleFlag), ActorRef.noSender());
+                    if (shuffleFlag > 0){
+                        shuffleFlag--;
+                    }
                 }
                 // Aggregate
                 else if(op instanceof AggregateOperator) {
+                    //下一批算子需要shuffle
+                    shuffleFlag++;
                     master.tell(new CreateAggMsg(op.name, posStage, isLocal, nodesAddr.get(i),
-                            ((AggregateOperator) op).fun), ActorRef.noSender());
+                            ((AggregateOperator) op).fun,i,shuffleFlag), ActorRef.noSender());
                 }
             }
             master.tell(new ChangeStageMsg(), ActorRef.noSender());
@@ -146,8 +151,8 @@ public class Starter {
         System.out.println("Source created!");
         return sys;
     }
-    private static final List<ActorRef> createSink(final ActorSystem sys) {
-        return Collections.singletonList(sys.actorOf(Sink.props(), "sink"));
+    private static final Map<Integer,ActorRef> createSink(final ActorSystem sys) {
+        return Collections.singletonMap(1,sys.actorOf(Sink.props(), "sink"));
     }
 
 }

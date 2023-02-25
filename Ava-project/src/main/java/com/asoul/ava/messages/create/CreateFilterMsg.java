@@ -7,8 +7,8 @@ public class CreateFilterMsg extends CreateMsg {
     private FilterFunction fun;
 
     public CreateFilterMsg(String name,int posStage, boolean isLocal,
-                           Address address,  final FilterFunction fun) {
-        super(name,posStage, isLocal, address);
+                           Address address,  final FilterFunction fun,int machineNumber,int shuffleFlag) {
+        super(name,posStage, isLocal, address,machineNumber,shuffleFlag);
         this.fun = fun;
     }
 

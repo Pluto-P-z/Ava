@@ -18,11 +18,12 @@ public class AggregateWorker extends Worker {
     private final AggregateFunction fun;
 
 
+
     private final Map<Integer, List<String>> windows = new HashMap<>();
 
-    public AggregateWorker( int stagePos, final List<ActorRef> downstream,
-                            final AggregateFunction fun) {
-        super( stagePos, downstream);
+    public AggregateWorker( int stagePos, final Map<Integer,ActorRef> downstream,
+                            final AggregateFunction fun,int machineNumber,int shuffleFlag) {
+        super( stagePos, downstream,machineNumber,shuffleFlag);
 
         this.fun = fun;
     }
@@ -64,7 +65,7 @@ public class AggregateWorker extends Worker {
 
     }
 
-    static public final Props props(int stagePos, List<ActorRef> downstream,
+    static public final Props props(int stagePos, Map<Integer,ActorRef> downstream,
                                     final AggregateFunction fun) {
         return Props.create(AggregateWorker.class, stagePos, downstream, fun);
     }

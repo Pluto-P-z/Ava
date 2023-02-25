@@ -7,12 +7,14 @@ import com.asoul.ava.messages.BatchMessage;
 import com.asoul.ava.messages.Message;
 
 import java.util.List;
+import java.util.Map;
+
 //Filter算子工作的actor
 public class FilterWorker extends Worker {
     private final FilterFunction fun;
 
-    public FilterWorker(int stagePos, final List<ActorRef> downstream, final FilterFunction fun) {
-        super(stagePos, downstream);
+    public FilterWorker(int stagePos, final Map<Integer,ActorRef> downstream, final FilterFunction fun, int machineNumber,int shuffleFlag) {
+        super(stagePos,downstream,machineNumber,shuffleFlag);
         this.fun = fun;
     }
     //处理一批数据（一个窗口）
@@ -37,8 +39,8 @@ public class FilterWorker extends Worker {
         batchQueue.clear();
     }
 
-    public static Props props( int stagePos, List<ActorRef> downstream,
-                              final FilterFunction fun) {
-        return Props.create(FilterWorker.class,stagePos, downstream, fun);
+    public static Props props( int stagePos, Map<Integer,ActorRef> downstream,
+                              final FilterFunction fun,int machineNumber,int shuffleFlag) {
+        return Props.create(FilterWorker.class,stagePos, downstream, fun,machineNumber,shuffleFlag);
     }
 }

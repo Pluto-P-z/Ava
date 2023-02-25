@@ -9,8 +9,8 @@ public class CreateMapMsg extends CreateMsg {
     private MapFunction fun;
 
     public CreateMapMsg(String name,  int posStage, boolean isLocal,
-                        Address address, final MapFunction fun) {
-        super(name,  posStage, isLocal, address);
+                        Address address, final MapFunction fun,int machineNumber,int shuffleFlag) {
+        super(name,  posStage, isLocal, address,machineNumber,shuffleFlag);
         this.fun = fun;
     }
 
@@ -18,9 +18,10 @@ public class CreateMapMsg extends CreateMsg {
         return fun;
     }
 
+
     @Override
     public String toString() {
-        return ""; //TODO
+        return "";
     }
 
 }

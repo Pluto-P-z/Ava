@@ -9,15 +9,18 @@ import com.asoul.ava.workers.*;
 import scala.concurrent.duration.Duration;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 //管理worker的节点，负责worker的创建
 public class Master extends AbstractActor {
 
-    private List<ActorRef> stage = new ArrayList<>();
-    private List<ActorRef> oldStage = new ArrayList<>();
+    //变成map
+    private HashMap<Integer,ActorRef> stage = new HashMap<>();
+    private HashMap<Integer,ActorRef> oldStage = new HashMap<>();
 
-
+    private boolean needShuffle = false;
     private int numMachines = 1;
 
 
@@ -49,12 +52,13 @@ public class Master extends AbstractActor {
 
     private void onChangeStage(ChangeStageMsg changeStageMsg) {
         oldStage = stage;
-        stage = new ArrayList<>();
+        stage = new HashMap<>();
     }
     //starter初始化的时候首先初始化sink，把sinkActor添加进stage，再change一次，sinckActor变成oldStage，stage又清空
     private void onReceiveSink(SinkMsg sinkMsg) {
-        stage = new ArrayList<>();
-        stage.add(sinkMsg.getSinkRef());
+        stage = new HashMap<>();
+        //TODO 先写死看看，到时候要不要变成常量
+        stage.put(1,sinkMsg.getSinkRef());
     }
     private void onReceiveSource(SourceMsg sourceMsg) {
         //给source发一条new SourceMsg(oldStage)
@@ -73,22 +77,23 @@ public class Master extends AbstractActor {
                     mapMsg.getPosStage(),
                     //下面是downstream
                     stageDeepCopy(oldStage),
-                    mapMsg.getFun()).withMailbox("recover-mailbox"), mapMsg.getName());
+                    mapMsg.getFun(),mapMsg.getShuffleFlag()).withMailbox("recover-mailbox"), mapMsg.getName());
         } else {
             //创建actor
             mapWorker = getContext().actorOf(MapWorker.props(
                     mapMsg.getPosStage(),
                     stageDeepCopy(oldStage),
-                    mapMsg.getFun()).withMailbox("recover-mailbox")
+                    mapMsg.getFun(),mapMsg.getShuffleFlag()).withMailbox("recover-mailbox")
                     //在别的机器上创建节点
                     .withDeploy(new Deploy(new RemoteScope(mapMsg.getAddress()))), mapMsg.getName());
         }
         //把worker丢进stage里面
-        updateStage(mapWorker);
+        updateStage(mapWorker, mapMsg.getMachineNumber());
     }
 
     private void onCreateAggMsg(CreateAggMsg aggMsg) {
         ActorRef aggWorker;
+        needShuffle = true;
         if (aggMsg.isLocal()) {
 
             aggWorker = getContext().actorOf(AggregateWorker.props(
@@ -105,7 +110,7 @@ public class Master extends AbstractActor {
                     .withDeploy(new Deploy(new RemoteScope(aggMsg.getAddress()))), aggMsg.getName());
 
         }
-        updateStage(aggWorker);
+        updateStage(aggWorker,aggMsg.getMachineNumber());
     }
 
     private void onCreateFilterMsg(CreateFilterMsg filterMsg) {
@@ -116,33 +121,35 @@ public class Master extends AbstractActor {
             filterWorker = getContext().actorOf(FilterWorker.props(
                     filterMsg.getPosStage(),
                     stageDeepCopy(oldStage),
-                    filterMsg.getFun()).withMailbox("recover-mailbox"), filterMsg.getName());
+                    filterMsg.getFun(),filterMsg.getMachineNumber(),filterMsg.getShuffleFlag()).withMailbox("recover-mailbox"), filterMsg.getName());
         } else {
             filterWorker = getContext().actorOf(FilterWorker.props(
                     filterMsg.getPosStage(),
                     stageDeepCopy(oldStage),
-                    filterMsg.getFun()).withMailbox("recover-mailbox")
+                    filterMsg.getFun(),filterMsg.getMachineNumber(),filterMsg.getShuffleFlag()).withMailbox("recover-mailbox")
                     .withDeploy(new Deploy(new RemoteScope(filterMsg.getAddress()))), filterMsg.getName());
         }
 
-        updateStage(filterWorker);
+        updateStage(filterWorker,filterMsg.getMachineNumber());
     }
 
 
 
-    private void updateStage(ActorRef actorRef) {
-            stage.add(actorRef);
+    private void updateStage(ActorRef actorRef,int machineNumber) {
+            stage.put(machineNumber,actorRef);
     }
 
-    private List<ActorRef> stageDeepCopy(List<ActorRef> stage) {
-        List<ActorRef> newStage = new ArrayList<>();
-        for (ActorRef actor : stage) {
-            newStage.add(actor);
+    private Map<Integer,ActorRef> stageDeepCopy(Map<Integer,ActorRef> stage) {
+        Map<Integer,ActorRef> newStage = new HashMap<>();
+        for (Integer key : stage.keySet()) {
+            newStage.put(key,stage.get(key));
         }
         return newStage;
     }
 
-
+    private void setNeedShuffle(boolean need){
+        needShuffle = need;
+    }
 
     public static Props props(int numMachines) {
         return Props.create(Master.class, numMachines);

@@ -1,6 +1,7 @@
 package com.asoul.ava.workers;
 
 import java.util.List;
+import java.util.Map;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
@@ -13,9 +14,9 @@ import com.asoul.ava.messages.Message;
 public class MapWorker extends Worker {
     private final MapFunction fun;
 
-    public MapWorker( int stagePos, final List<ActorRef> downstream,
-                     final MapFunction fun) {
-        super( stagePos, downstream);
+    public MapWorker( int stagePos, final Map<Integer,ActorRef> downstream,
+                     final MapFunction fun,int machineNumber,int shuffleFlag) {
+        super( stagePos, downstream,machineNumber,shuffleFlag);
         this.fun = fun;
     }
 
@@ -32,15 +33,24 @@ public class MapWorker extends Worker {
             final Message result = fun.process(message.getKey(), message.getVal());
             batchQueue.add(result);
         }
-        final int receiver = Math.abs(batchQueue.get(0).getKey().hashCode()) % downstream.size();
-        downstream.get(receiver).tell(new BatchMessage(batchQueue,batchMessage.getBatchInfo()), self());
+        if (this.getShuffleFlag() == 0){
+            //找到本机的下一个算子。
+            downstream.get(this.getMachineNumber()).tell(new BatchMessage(batchQueue,batchMessage.getBatchInfo()), self());
+        }else{
+            //TODO
+            //写入shuffle中间文件
+            //通知Master
+            //Master通知下游读取
+            //
+        }
+
         System.out.println("batchMessage.getBatchInfo():"+batchMessage.getBatchInfo());
         batchQueue.clear();
     }
 
-    public static Props props(int stagePos, List<ActorRef> downstream,
-                               final MapFunction fun) {
-        return Props.create(MapWorker.class, stagePos, downstream, fun);
+    public static Props props(int stagePos, Map<Integer,ActorRef> downstream,
+                               final MapFunction fun,int shuffleFlag) {
+        return Props.create(MapWorker.class, stagePos, downstream, fun,shuffleFlag);
     }
 
 
