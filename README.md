@@ -4,3 +4,6 @@
 AvavaAvA!
 项目答辩文档地址
 https://juejin.cn/post/7136086713771753485
+
+实现参考：
+https://github.com/tmscarla/akka-big-data
