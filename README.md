@@ -7,3 +7,7 @@ https://juejin.cn/post/7136086713771753485
 
 reference：
 https://github.com/tmscarla/akka-big-data
+
+v2.0目标：
+实现并行计算
+实现简易shuffle
